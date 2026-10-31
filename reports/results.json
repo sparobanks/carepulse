@@ -1,0 +1,381 @@
+{
+  "matching": {
+    "travel_times": "estimated (straight line x 1.35 at 24 km/h)",
+    "days": 5,
+    "visits_per_day": 269,
+    "carers": 45,
+    "solver_seconds": 20,
+    "mean": {
+      "nearest_free_carer": {
+        "visits": 267.6,
+        "assigned": 251.4,
+        "unassigned": 16.2,
+        "travel_minutes": 3138.2,
+        "travel_per_visit": 12.5,
+        "continuity_pct": 32.3,
+        "mean_minutes_from_planned": 21.4,
+        "within_15_min_pct": 29.0,
+        "carers_used": 44.4,
+        "max_visits_per_carer": 8.6,
+        "visits_per_carer_sd": 1.8
+      },
+      "regular_carer_first": {
+        "visits": 267.6,
+        "assigned": 250.8,
+        "unassigned": 16.8,
+        "travel_minutes": 4007.6,
+        "travel_per_visit": 16.0,
+        "continuity_pct": 76.9,
+        "mean_minutes_from_planned": 20.6,
+        "within_15_min_pct": 31.5,
+        "carers_used": 45.0,
+        "max_visits_per_carer": 8.4,
+        "visits_per_carer_sd": 1.9
+      },
+      "optimised": {
+        "visits": 267.6,
+        "assigned": 265.4,
+        "unassigned": 2.2,
+        "travel_minutes": 3265.0,
+        "travel_per_visit": 12.3,
+        "continuity_pct": 69.4,
+        "mean_minutes_from_planned": 13.1,
+        "within_15_min_pct": 71.1,
+        "carers_used": 45.0,
+        "max_visits_per_carer": 7.8,
+        "visits_per_carer_sd": 1.2
+      }
+    },
+    "continuity_sweep": [
+      {
+        "continuity_weight": 0,
+        "visits": 269,
+        "assigned": 269,
+        "unassigned": 0,
+        "travel_minutes": 2914,
+        "travel_per_visit": 10.8,
+        "continuity_pct": 40.5,
+        "mean_minutes_from_planned": 12.2,
+        "within_15_min_pct": 76.6,
+        "carers_used": 45,
+        "max_visits_per_carer": 8,
+        "visits_per_carer_sd": 1.25
+      },
+      {
+        "continuity_weight": 5,
+        "visits": 269,
+        "assigned": 269,
+        "unassigned": 0,
+        "travel_minutes": 3021,
+        "travel_per_visit": 11.2,
+        "continuity_pct": 53.9,
+        "mean_minutes_from_planned": 12.5,
+        "within_15_min_pct": 74.7,
+        "carers_used": 45,
+        "max_visits_per_carer": 8,
+        "visits_per_carer_sd": 1.18
+      },
+      {
+        "continuity_weight": 15,
+        "visits": 269,
+        "assigned": 267,
+        "unassigned": 2,
+        "travel_minutes": 3187,
+        "travel_per_visit": 11.9,
+        "continuity_pct": 70.0,
+        "mean_minutes_from_planned": 12.3,
+        "within_15_min_pct": 74.2,
+        "carers_used": 45,
+        "max_visits_per_carer": 8,
+        "visits_per_carer_sd": 1.45
+      },
+      {
+        "continuity_weight": 30,
+        "visits": 269,
+        "assigned": 268,
+        "unassigned": 1,
+        "travel_minutes": 3553,
+        "travel_per_visit": 13.3,
+        "continuity_pct": 85.8,
+        "mean_minutes_from_planned": 13.4,
+        "within_15_min_pct": 68.7,
+        "carers_used": 45,
+        "max_visits_per_carer": 8,
+        "visits_per_carer_sd": 1.78
+      },
+      {
+        "continuity_weight": 60,
+        "visits": 269,
+        "assigned": 269,
+        "unassigned": 0,
+        "travel_minutes": 3959,
+        "travel_per_visit": 14.7,
+        "continuity_pct": 85.9,
+        "mean_minutes_from_planned": 15.4,
+        "within_15_min_pct": 59.5,
+        "carers_used": 45,
+        "max_visits_per_carer": 9,
+        "visits_per_carer_sd": 1.6
+      }
+    ]
+  },
+  "retention": {
+    "snapshots": {
+      "train": 16800,
+      "calibration": 2800,
+      "test": 5600
+    },
+    "carers": 2689,
+    "logistic_regression": {
+      "roc_auc": 0.757,
+      "pr_auc": 0.282,
+      "brier": 0.0724,
+      "ece": 0.0078,
+      "base_rate": 0.089,
+      "top10_precision": 0.316,
+      "top10_share_of_leavers": 0.353
+    },
+    "lightgbm": {
+      "roc_auc": 0.756,
+      "pr_auc": 0.287,
+      "brier": 0.0719,
+      "ece": 0.0074,
+      "base_rate": 0.089,
+      "top10_precision": 0.325,
+      "top10_share_of_leavers": 0.363
+    },
+    "fairness_top10pct": [
+      {
+        "attribute": "sex",
+        "group": "F",
+        "n": 4472,
+        "actual_leave_rate": 0.087,
+        "mean_predicted": 0.094,
+        "roc_auc": 0.763,
+        "flag_rate": 0.142,
+        "leavers_caught": 0.455
+      },
+      {
+        "attribute": "sex",
+        "group": "M",
+        "n": 1128,
+        "actual_leave_rate": 0.099,
+        "mean_predicted": 0.094,
+        "roc_auc": 0.728,
+        "flag_rate": 0.134,
+        "leavers_caught": 0.438
+      },
+      {
+        "attribute": "age_band",
+        "group": "18-24",
+        "n": 1031,
+        "actual_leave_rate": 0.089,
+        "mean_predicted": 0.092,
+        "roc_auc": 0.777,
+        "flag_rate": 0.126,
+        "leavers_caught": 0.5
+      },
+      {
+        "attribute": "age_band",
+        "group": "25-39",
+        "n": 2087,
+        "actual_leave_rate": 0.085,
+        "mean_predicted": 0.092,
+        "roc_auc": 0.77,
+        "flag_rate": 0.141,
+        "leavers_caught": 0.452
+      },
+      {
+        "attribute": "age_band",
+        "group": "40-54",
+        "n": 1649,
+        "actual_leave_rate": 0.081,
+        "mean_predicted": 0.097,
+        "roc_auc": 0.724,
+        "flag_rate": 0.144,
+        "leavers_caught": 0.388
+      },
+      {
+        "attribute": "age_band",
+        "group": "55+",
+        "n": 833,
+        "actual_leave_rate": 0.118,
+        "mean_predicted": 0.096,
+        "roc_auc": 0.755,
+        "flag_rate": 0.148,
+        "leavers_caught": 0.49
+      }
+    ],
+    "mean_abs_shap": {
+      "rota_volatility": 0.6346,
+      "unpaid_travel_share": 0.5448,
+      "months_since_progression": 0.1911,
+      "tenure_months": 0.1497,
+      "rota_changes_short_notice": 0.1025,
+      "avg_weekly_hours": 0.0961,
+      "client_continuity": 0.0919,
+      "overtime_hours": 0.0749,
+      "split_shift_share": 0.0628,
+      "weekend_share": 0.0439,
+      "sickness_days": 0.0403,
+      "supervision_overdue": 0.0053
+    },
+    "example": {
+      "risk": 0.99,
+      "reasons": [
+        {
+          "feature": "rota_volatility",
+          "value": 11.49,
+          "typical": 2.96,
+          "impact": 2.936,
+          "reason": "Unsettled rota from week to week",
+          "suggested_action": "Keep their runs stable for the next month"
+        },
+        {
+          "feature": "unpaid_travel_share",
+          "value": 0.386,
+          "typical": 0.207,
+          "impact": 0.632,
+          "reason": "A lot of unpaid travel between visits",
+          "suggested_action": "Re-plan their visits closer together"
+        },
+        {
+          "feature": "rota_changes_short_notice",
+          "value": 13,
+          "typical": 3.0,
+          "impact": 0.399,
+          "reason": "Many rota changes at short notice",
+          "suggested_action": "Keep their runs stable for the next month"
+        }
+      ]
+    }
+  },
+  "notes": {
+    "thresholds": {
+      "safeguarding": 0.2,
+      "missed_task": 0.23,
+      "deterioration": 0.71,
+      "quality_risk": 0.16
+    },
+    "n_train": 2110,
+    "n_test": 890,
+    "rules": [
+      {
+        "category": "safeguarding",
+        "positives": 139,
+        "precision": 0.986,
+        "recall": 0.978,
+        "f1": 0.982
+      },
+      {
+        "category": "missed_task",
+        "positives": 122,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      {
+        "category": "deterioration",
+        "positives": 130,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      {
+        "category": "quality_risk",
+        "positives": 117,
+        "precision": 1.0,
+        "recall": 0.991,
+        "f1": 0.996
+      }
+    ],
+    "rules_routing": {
+      "share_by_route": {
+        "no_action": 0.502,
+        "record": 0.273,
+        "urgent_review": 0.155,
+        "review": 0.07
+      },
+      "safeguarding_notes_sent_to_urgent_review": 0.978,
+      "notes_with_a_concern_seen_by_a_person_or_recorded": 0.991,
+      "routine_notes_sent_to_a_person": 0.002
+    },
+    "classifier": [
+      {
+        "category": "safeguarding",
+        "positives": 139,
+        "precision": 0.385,
+        "recall": 0.986,
+        "f1": 0.554
+      },
+      {
+        "category": "missed_task",
+        "positives": 122,
+        "precision": 0.44,
+        "recall": 0.574,
+        "f1": 0.498
+      },
+      {
+        "category": "deterioration",
+        "positives": 130,
+        "precision": 0.305,
+        "recall": 0.138,
+        "f1": 0.19
+      },
+      {
+        "category": "quality_risk",
+        "positives": 117,
+        "precision": 0.202,
+        "recall": 0.846,
+        "f1": 0.326
+      }
+    ],
+    "rules_plus_classifier": [
+      {
+        "category": "safeguarding",
+        "positives": 139,
+        "precision": 0.401,
+        "recall": 1.0,
+        "f1": 0.572
+      },
+      {
+        "category": "missed_task",
+        "positives": 122,
+        "precision": 0.584,
+        "recall": 1.0,
+        "f1": 0.737
+      },
+      {
+        "category": "deterioration",
+        "positives": 130,
+        "precision": 0.774,
+        "recall": 1.0,
+        "f1": 0.872
+      },
+      {
+        "category": "quality_risk",
+        "positives": 117,
+        "precision": 0.216,
+        "recall": 1.0,
+        "f1": 0.355
+      }
+    ],
+    "rules_plus_classifier_routing": {
+      "share_by_route": {
+        "urgent_review": 0.39,
+        "no_action": 0.234,
+        "record": 0.201,
+        "review": 0.175
+      },
+      "safeguarding_notes_sent_to_urgent_review": 1.0,
+      "notes_with_a_concern_seen_by_a_person_or_recorded": 1.0,
+      "routine_notes_sent_to_a_person": 0.322
+    },
+    "redaction": {
+      "notes_with_phone": 35,
+      "phones_left_after_redaction": 0,
+      "client_names_left": 0
+    }
+  },
+  "runtime_seconds": 236.1
+}

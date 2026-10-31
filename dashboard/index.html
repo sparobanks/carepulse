@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CarePulse</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root { --bg:#f6f7f5; --card:#fff; --ink:#1d2321; --muted:#5d6763; --line:#dde2df;
+          --brand:#1f7a5c; --warn:#b8641a; --bad:#b3261e; --ok:#2e7d32; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; background:var(--bg); color:var(--ink); }
+  header { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between;
+           padding:14px 20px; background:var(--card); border-bottom:1px solid var(--line); }
+  h1 { font-size:20px; margin:0; } h1 span { color:var(--brand); }
+  .sub { color:var(--muted); font-size:13px; }
+  main { max-width:1100px; margin:0 auto; padding:16px; }
+  nav { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
+  nav button { border:1px solid var(--line); background:var(--card); padding:8px 14px; border-radius:8px; cursor:pointer; font:inherit; }
+  nav button.on { background:var(--brand); color:#fff; border-color:var(--brand); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:14px; }
+  .row { display:flex; gap:12px; flex-wrap:wrap; align-items:end; }
+  label { font-size:13px; color:var(--muted); display:flex; flex-direction:column; gap:4px; }
+  input, textarea, select { font:inherit; padding:8px; border:1px solid var(--line); border-radius:8px; }
+  textarea { width:100%; min-height:110px; }
+  .go { background:var(--brand); color:#fff; border:0; padding:9px 16px; border-radius:8px; cursor:pointer; font:inherit; }
+  .go:disabled { opacity:.6; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th, td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--muted); font-weight:600; }
+  .num { text-align:right; font-variant-numeric:tabular-nums; }
+  .better { color:var(--ok); font-weight:600; }
+  #map { height:420px; border-radius:10px; }
+  .pill { display:inline-block; padding:1px 8px; border-radius:99px; font-size:12px; font-weight:600; }
+  .high, .urgent_review { background:#fbe3e1; color:var(--bad); }
+  .medium, .review { background:#fcefdf; color:var(--warn); }
+  .low, .record { background:#e5f2ea; color:var(--ok); }
+  .no_action { background:#eceeed; color:var(--muted); }
+  .err { color:var(--bad); }
+  .hidden { display:none; }
+  blockquote { margin:6px 0; padding:6px 10px; border-left:3px solid var(--brand); background:#f2f6f4; }
+  @media (max-width:600px){ main{padding:10px;} th:nth-child(n+4), td:nth-child(n+4){display:none;} }
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Care<span>Pulse</span></h1><div class="sub">Prototype on synthetic data. No real people.</div></div>
+  <label>API key <input id="key" type="password" placeholder="e.g. demo-manager" autocomplete="off"></label>
+</header>
+<main>
+  <nav>
+    <button data-tab="match" class="on">Visit matching</button>
+    <button data-tab="retention">Staff retention</button>
+    <button data-tab="notes">Care notes</button>
+    <button data-tab="review">Review queue</button>
+  </nav>
+
+  <section id="match">
+    <div class="card">
+      <div class="row">
+        <label>Continuity weight <input id="w_cont" type="number" value="15" min="0" max="120"></label>
+        <label>Balance weight <input id="w_bal" type="number" value="10" min="0" max="100"></label>
+        <label>Punctuality weight <input id="w_punc" type="number" value="1" min="0" max="10"></label>
+        <button class="go" id="plan">Plan morning shift</button>
+      </div>
+      <p class="sub" id="travelsrc"></p>
+    </div>
+    <div class="card hidden" id="planout">
+      <table id="plantable"></table>
+    </div>
+    <div class="card"><div id="map"></div></div>
+  </section>
+
+  <section id="retention" class="hidden">
+    <div class="card">
+      <p class="sub">Who may need support to stay. For supportive conversations only, never for disciplinary or selection decisions.</p>
+      <button class="go" id="loadrisk">Show highest risk</button>
+      <div id="riskout"></div>
+    </div>
+  </section>
+
+  <section id="notes" class="hidden">
+    <div class="card">
+      <label>Client name (removed before analysis) <input id="cname" value="Mrs Begum"></label>
+      <label style="margin-top:8px">Visit note
+        <textarea id="note">Helped Mrs Begum with wash and dress. Noticed fresh bruising on her upper arm, she could not say how it happened. Did not give her morning meds as the box was empty.</textarea>
+      </label>
+      <p><button class="go" id="analyse">Check note</button></p>
+      <div id="noteout"></div>
+    </div>
+  </section>
+
+  <section id="review" class="hidden">
+    <div class="card"><button class="go" id="loadq">Load open reviews</button><div id="qout"></div></div>
+  </section>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const hhmm = (m) => String(Math.floor(m/60)).padStart(2,'0') + ':' + String(m%60).padStart(2,'0');
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, { ...opts, headers: { 'Content-Type': 'application/json', 'X-API-Key': $('key').value, ...(opts.headers||{}) } });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(body.detail || r.statusText);
+  return body;
+}
+
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('main section').forEach(s => s.classList.toggle('hidden', s.id !== b.dataset.tab));
+  if (b.dataset.tab === 'match') setTimeout(() => map.invalidateSize(), 50);
+});
+
+const map = L.map('map').setView([52.48, -1.88], 11);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18,
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }).addTo(map);
+const layer = L.layerGroup().addTo(map);
+const palette = ['#1f7a5c','#b8641a','#3b5ba5','#a23b72','#5c7a1f','#7a1f5c','#1f5c7a','#8a6d1f'];
+
+$('plan').onclick = async () => {
+  const btn = $('plan'); btn.disabled = true; btn.textContent = 'Planning...';
+  try {
+    const d = await api('/match/plan', { method: 'POST', body: JSON.stringify({
+      continuity: +$('w_cont').value, balance: +$('w_bal').value, punctuality: +$('w_punc').value, time_limit_s: 5 }) });
+    $('travelsrc').textContent = 'Travel times: ' + d.travel_times;
+    const o = d.optimised, b = d.baseline_nearest_free_carer;
+    const rows = [
+      ['Visits covered', o.assigned + ' / ' + o.visits, b.assigned + ' / ' + b.visits, o.assigned >= b.assigned],
+      ['Total travel (minutes)', o.travel_minutes, b.travel_minutes, o.travel_minutes <= b.travel_minutes],
+      ['Travel per visit (minutes)', o.travel_per_visit, b.travel_per_visit, o.travel_per_visit <= b.travel_per_visit],
+      ['Visits by a regular carer', o.continuity_pct + '%', b.continuity_pct + '%', o.continuity_pct >= b.continuity_pct],
+      ['Started within 15 min of plan', o.within_15_min_pct + '%', b.within_15_min_pct + '%', o.within_15_min_pct >= b.within_15_min_pct],
+      ['Most visits for one carer', o.max_visits_per_carer, b.max_visits_per_carer, o.max_visits_per_carer <= b.max_visits_per_carer],
+    ];
+    $('plantable').innerHTML = '<tr><th></th><th class="num">Optimised</th><th class="num">Nearest free carer</th></tr>' +
+      rows.map(r => `<tr><td>${r[0]}</td><td class="num ${r[3] ? 'better' : ''}">${r[1]}</td><td class="num">${r[2]}</td></tr>`).join('');
+    $('planout').classList.remove('hidden');
+    layer.clearLayers();
+    Object.entries(d.runs).forEach(([cid, run], i) => {
+      const col = palette[i % palette.length];
+      const pts = [run.home, ...run.stops.map(s => [s.lat, s.lon]), run.home];
+      L.polyline(pts, { color: col, weight: 2, opacity: .7 }).addTo(layer).bindTooltip(cid);
+      run.stops.forEach(s => L.circleMarker([s.lat, s.lon], { radius: 4, color: col, fillOpacity: .9 })
+        .bindPopup(`${esc(cid)}: ${esc(s.client_id)} at ${hhmm(s.start)} (planned ${hhmm(s.planned)})`).addTo(layer));
+    });
+  } catch (e) { $('travelsrc').innerHTML = `<span class="err">${esc(e.message)}</span>`; }
+  btn.disabled = false; btn.textContent = 'Plan morning shift';
+};
+
+$('loadrisk').onclick = async () => {
+  try {
+    const d = await api('/retention/risk?limit=15');
+    $('riskout').innerHTML = '<table><tr><th>Carer</th><th>Risk</th><th>Main reasons</th><th>Suggested support</th></tr>' +
+      d.people.map(p => `<tr><td>${esc(p.carer_id)}</td><td><span class="pill ${p.band}">${Math.round(p.risk*100)}%</span></td>
+        <td>${p.reasons.map(r => esc(r.reason)).join('<br>')}</td><td>${p.reasons.map(r => esc(r.suggested_action)).join('<br>')}</td></tr>`).join('') + '</table>';
+  } catch (e) { $('riskout').innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+};
+
+$('analyse').onclick = async () => {
+  try {
+    const d = await api('/notes/analyse', { method: 'POST', body: JSON.stringify({
+      note_id: 'demo-' + Date.now(), text: $('note').value, client_name: $('cname').value || null }) });
+    $('noteout').innerHTML = `<p>Outcome: <span class="pill ${d.route}">${d.route.replace('_',' ')}</span>
+      ${d.review_id ? ' (added to review queue)' : ''}</p>
+      <p class="sub">What the system saw after removing identifiers:</p><blockquote>${esc(d.redacted_text)}</blockquote>` +
+      (d.findings.length ? '<table><tr><th>Concern</th><th>Severity</th><th>Evidence from the note</th><th>Source</th></tr>' +
+        d.findings.map(f => `<tr><td>${esc(f.category.replace('_',' '))}</td><td><span class="pill ${f.severity}">${f.severity}</span></td>
+          <td>"${esc(f.evidence)}"</td><td>${esc(f.source)}</td></tr>`).join('') + '</table>' : '<p>No concerns found.</p>');
+  } catch (e) { $('noteout').innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+};
+
+async function loadQueue() {
+  try {
+    const q = await api('/review/queue');
+    $('qout').innerHTML = q.length ? q.map(r => `<div class="card"><span class="pill ${r.route}">${r.route.replace('_',' ')}</span>
+      <blockquote>${esc(r.redacted_text)}</blockquote>
+      ${r.findings.map(f => `<div><b>${esc(f.category.replace('_',' '))}</b>: "${esc(f.evidence)}"</div>`).join('')}
+      <p><button class="go" data-id="${r.id}" data-d="confirmed">Confirm concern</button>
+         <button class="go" data-id="${r.id}" data-d="escalated">Escalate</button>
+         <button class="go" data-id="${r.id}" data-d="not_a_concern">Not a concern</button></p></div>`).join('') : '<p>No open reviews.</p>';
+    $('qout').querySelectorAll('button[data-id]').forEach(b => b.onclick = async () => {
+      try { await api(`/review/${b.dataset.id}/decision`, { method: 'POST', body: JSON.stringify({ decision: b.dataset.d }) }); loadQueue(); }
+      catch (e) { alert(e.message); }
+    });
+  } catch (e) { $('qout').innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+}
+$('loadq').onclick = loadQueue;
+</script>
+</body>
+</html>
